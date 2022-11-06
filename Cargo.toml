@@ -1,10 +1,10 @@
 [package]
 authors = ["Davy Duperron <yamafaktory@gmail.com>"]
-categories = []
-description = "todo"
+categories = ["command-line-utilities", "filesystem", "multimedia"]
+description = "A CLI tool to resize clipboard images on the fly"
 edition = "2021"
 exclude = ["rustfmt.toml"]
-keywords = [] 
+keywords = ["cli", "terminal", "tool", "utility", "image"]
 license = "MIT"
 name = "picst"
 readme = "README.md"
