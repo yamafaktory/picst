@@ -1,15 +1,19 @@
+use std::io::Read;
+
 use arboard::Clipboard;
 use async_stream::stream;
 use clap::Parser;
 use futures::Stream;
 use image::{imageops, RgbaImage};
 use itertools::equal;
-use std::io::Read;
 use tokio::time::{sleep, Duration, Instant};
 
-use crate::dimension::{get_dimension, Dimension};
-use crate::spinner::display_spinner;
-use crate::{args::Args, resized_image::ResizedImage};
+use crate::{
+    args::Args,
+    dimension::{get_dimension, Dimension},
+    resized_image::ResizedImage,
+    spinner::display_spinner,
+};
 
 /// Main loop stream polling on the clipboard content.
 pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {

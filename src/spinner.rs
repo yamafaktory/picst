@@ -1,5 +1,6 @@
-use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration;
+
+use indicatif::{ProgressBar, ProgressStyle};
 
 static DOTS: &[&str; 14] = &[
     "⠄", "⠆", "⠇", "⠋", "⠙", "⠸", "⠰", "⠠", "⠰", "⠸", "⠙", "⠋", "⠇", "⠆",
