@@ -1,0 +1,25 @@
+[package]
+authors = ["Davy Duperron <yamafaktory@gmail.com>"]
+categories = []
+description = "todo"
+edition = "2021"
+exclude = ["rustfmt.toml"]
+keywords = [] 
+license = "MIT"
+name = "picst"
+readme = "README.md"
+repository = "https://github.com/yamafaktory/picst"
+rust-version = "1.65"
+version = "0.1.0"
+
+[dependencies]
+arboard = "3.2.0"
+async-stream = "0.3.3"
+clap = { version = "4.0.19", features = ["derive"] }
+dialoguer = "0.10.2"
+futures = "0.3.25"
+image = "0.24.4"
+indicatif = "0.17.1"
+itertools = "0.10.5"
+tokio = { version = "1.21.2", features = ["full"] }
+
