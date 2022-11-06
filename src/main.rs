@@ -3,10 +3,11 @@
 #![warn(missing_debug_implementations, missing_docs)]
 #![doc = include_str!("../README.md")]
 
+use std::{borrow::Cow, io::Read};
+
 use arboard::{Clipboard, ImageData};
 use dialoguer::console::{style, Emoji};
 use futures::{pin_mut, StreamExt};
-use std::{borrow::Cow, io::Read};
 
 use crate::stream::get_stream;
 
