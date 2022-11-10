@@ -1,7 +1,8 @@
 use std::io::Read;
 
+use anyhow::Result;
 use arboard::Clipboard;
-use async_stream::stream;
+use async_stream::try_stream;
 use clap::Parser;
 use futures::Stream;
 use image::{imageops, RgbaImage};
@@ -10,16 +11,16 @@ use tokio::time::{sleep, Duration, Instant};
 
 use crate::{
     args::Args,
-    dimension::{get_dimension, Dimension},
+    dimension::{get_dimension, get_unit, Dimension, Unit},
     resized_image::ResizedImage,
     spinner::display_spinner,
 };
 
 /// Main loop stream polling on the clipboard content.
-pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {
+pub(crate) fn get_stream() -> impl Stream<Item = Result<ResizedImage>> {
     let args = Args::parse();
 
-    stream! {
+    try_stream! {
         // Get a new instance of the clipboard.
         let mut clipboard = Clipboard::new().unwrap();
 
@@ -53,8 +54,16 @@ pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {
                     }
 
                     if !skip_iteration {
-                        let height = get_dimension(Dimension::Height, args.height);
-                        let width = get_dimension(Dimension::Width, args.width);
+                        // TODO!
+                        let unit = get_unit()?;
+                        let height = get_dimension(Dimension::Height, args.height)?;
+                        let width = get_dimension(Dimension::Width, args.width)?;
+
+                        // let (h,w) = match unit {
+                        //     Unit::Pixel => (height, width),
+                        //     Unit::Percentage => (0,1),
+                        //     Unit::Ratio => (0,1),
+                        // };
 
                         let start_time = Instant::now();
 

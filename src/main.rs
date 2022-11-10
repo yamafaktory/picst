@@ -5,6 +5,7 @@
 
 use std::{borrow::Cow, io::Read};
 
+use anyhow::Result;
 use arboard::{Clipboard, ImageData};
 use dialoguer::console::{style, Emoji};
 use futures::{pin_mut, StreamExt};
@@ -20,7 +21,7 @@ mod stream;
 static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     // Get the stream.
     let stream = get_stream();
 
@@ -30,7 +31,8 @@ async fn main() {
     // Get an instance of the clipboard to consume the stream.
     let mut clipboard = Clipboard::new().unwrap();
 
-    while let Some(mut resized_image) = stream.next().await {
+    while let Some(maybe_resized_image) = stream.next().await {
+        let mut resized_image = maybe_resized_image?;
         let image_buffer = resized_image.get_buffer();
         let maybe_bytes: Result<Vec<u8>, _> = image_buffer.bytes().collect();
 
@@ -57,4 +59,6 @@ async fn main() {
             println!();
         }
     }
+
+    Ok(())
 }
