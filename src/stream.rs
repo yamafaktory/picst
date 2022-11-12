@@ -3,23 +3,19 @@ use std::io::Read;
 use anyhow::Result;
 use arboard::Clipboard;
 use async_stream::try_stream;
-use clap::Parser;
 use futures::Stream;
 use image::{imageops, RgbaImage};
 use itertools::equal;
 use tokio::time::{sleep, Duration, Instant};
 
 use crate::{
-    args::Args,
-    dimension::{get_dimension, get_unit, Dimension, Unit},
+    dimension::{create_wizard, WizardResult},
     resized_image::ResizedImage,
     spinner::display_spinner,
 };
 
 /// Main loop stream polling on the clipboard content.
 pub(crate) fn get_stream() -> impl Stream<Item = Result<ResizedImage>> {
-    let args = Args::parse();
-
     try_stream! {
         // Get a new instance of the clipboard.
         let mut clipboard = Clipboard::new().unwrap();
@@ -54,16 +50,19 @@ pub(crate) fn get_stream() -> impl Stream<Item = Result<ResizedImage>> {
                     }
 
                     if !skip_iteration {
-                        // TODO!
-                        let unit = get_unit()?;
-                        let height = get_dimension(Dimension::Height, args.height)?;
-                        let width = get_dimension(Dimension::Width, args.width)?;
-
-                        // let (h,w) = match unit {
-                        //     Unit::Pixel => (height, width),
-                        //     Unit::Percentage => (0,1),
-                        //     Unit::Ratio => (0,1),
-                        // };
+                        // Create a wizard.
+                        let (height, width) = match create_wizard()? {
+                            WizardResult::Dimensions(height, width, dimensions_in_pixels) => {
+                                if dimensions_in_pixels {
+                                    (height, width)
+                                } else {
+                                    ((image.height as u32 * height) / 100, (image.width as u32 * width) / 100)
+                                }
+                            }
+                            WizardResult::Ratio(ratio) => {
+                                ((image.height as f32 * ratio) as u32 , (image.width as f32 * ratio) as u32)
+                            }
+                        };
 
                         let start_time = Instant::now();
 

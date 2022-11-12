@@ -7,10 +7,11 @@ use std::{borrow::Cow, io::Read};
 
 use anyhow::Result;
 use arboard::{Clipboard, ImageData};
+use clap::Parser;
 use dialoguer::console::{style, Emoji};
 use futures::{pin_mut, StreamExt};
 
-use crate::stream::get_stream;
+use crate::{args::Args, stream::get_stream};
 
 mod args;
 mod dimension;
@@ -22,6 +23,9 @@ static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Do the arguments parsing upfront to ensure to exit directly.
+    Args::parse();
+
     // Get the stream.
     let stream = get_stream();
 

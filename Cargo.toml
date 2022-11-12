@@ -16,10 +16,10 @@ version = "0.1.2"
 anyhow = "1.0.66"
 arboard = "3.2.0"
 async-stream = "0.3.3"
-clap = { version = "4.0.22", features = ["derive"] }
+clap = { version = "4.0.23", features = ["derive"] }
 dialoguer = "0.10.2"
 futures = "0.3.25"
-image = "0.24.4"
+image = "0.24.5"
 indicatif = "0.17.2"
 itertools = "0.10.5"
 tokio = { version = "1.21.2", features = ["full"] }
