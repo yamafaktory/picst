@@ -3,8 +3,12 @@ use std::convert::TryFrom;
 use anyhow::Result;
 use dialoguer::{console::Term, theme::ColorfulTheme, Input, Select};
 
-use crate::args::ArgsResult;
+use crate::{
+    args::{Args, ArgsResult},
+    validation::{percent_validator, pixels_validator, ratio_validator},
+};
 
+/// Units used for the select prompt.
 static UNITS: &[&str; 3] = &["Pixel", "Percentage", "Ratio"];
 
 /// Enumeration for the dimension.
@@ -14,6 +18,7 @@ enum Dimension {
 }
 
 impl Dimension {
+    /// Returns the name associated with the variant.
     fn get_name(self) -> &'static str {
         match self {
             Dimension::Height => "Height",
@@ -23,7 +28,7 @@ impl Dimension {
 }
 
 /// Enumeration for the unit.
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Unit {
     Pixel = 0,
     Percentage = 1,
@@ -31,6 +36,7 @@ enum Unit {
 }
 
 impl Unit {
+    /// Returns the static units.
     fn get_items() -> &'static [&'static str; 3] {
         UNITS
     }
@@ -70,18 +76,18 @@ fn get_unit() -> Result<Unit> {
 }
 
 /// Prompts the user for a dimension.
-fn get_dimension(dimension: Dimension) -> Result<u32> {
+fn get_dimension(dimension: Dimension, is_pixel: bool) -> Result<u32> {
     // Use a prompt to get the desired value.
     let value: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt(dimension.get_name())
         .validate_with({
-            move |input: &String| -> Result<(), &str> {
-                // Check if parsing the input to a u32 is fine.
-                if input.parse::<u32>().is_ok() {
-                    return Ok(());
+            move |input: &String| -> Result<(), String> {
+                // Validate the input as pixels or percent.
+                if is_pixel {
+                    pixels_validator(input).map(|_| ())
+                } else {
+                    percent_validator(input).map(|_| ())
                 }
-
-                Err("Please enter a valid number!")
             }
         })
         .interact_text()?;
@@ -96,13 +102,9 @@ fn get_ratio() -> Result<f32> {
     let value: String = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Ratio")
         .validate_with({
-            move |input: &String| -> Result<(), &str> {
-                // Check if parsing the input to a f32 is fine.
-                if input.parse::<f32>().is_ok() {
-                    return Ok(());
-                }
-
-                Err("Please enter a valid number!")
+            move |input: &String| -> Result<(), String> {
+                // Validate the input as ratio.
+                ratio_validator(input).map(|_| ())
             }
         })
         .interact_text()?;
@@ -113,18 +115,18 @@ fn get_ratio() -> Result<f32> {
 
 /// Creates a full wizard which returns all the necessary information.
 /// It will prompt or not the user based on the parsed arguments.
-pub(crate) fn create_wizard() -> Result<WizardResult> {
-    match ArgsResult::get() {
+pub(crate) fn create_wizard(args: &Args) -> Result<WizardResult> {
+    match ArgsResult::get(args) {
         // If dimensions are passed, we eventually need to prompt for the
         // missing height or width.
         ArgsResult::Dimensions(height, width, dimensions_in_pixels) => {
             let height = match height {
                 Some(height) => height,
-                None => get_dimension(Dimension::Height)?,
+                None => get_dimension(Dimension::Height, dimensions_in_pixels)?,
             };
             let width = match width {
                 Some(width) => width,
-                None => get_dimension(Dimension::Width)?,
+                None => get_dimension(Dimension::Width, dimensions_in_pixels)?,
             };
 
             Ok(WizardResult::Dimensions(
@@ -144,13 +146,40 @@ pub(crate) fn create_wizard() -> Result<WizardResult> {
 
                 Ok(WizardResult::Ratio(ratio))
             } else {
-                let height = get_dimension(Dimension::Height)?;
-                let width = get_dimension(Dimension::Width)?;
+                let is_pixel = unit == Unit::Pixel;
+                let height = get_dimension(Dimension::Height, is_pixel)?;
+                let width = get_dimension(Dimension::Width, is_pixel)?;
 
                 Ok(WizardResult::Dimensions(height, width, unit == Unit::Pixel))
             }
         }
         // If a ratio is passed, just use it.
         ArgsResult::Ratio(ratio) => Ok(WizardResult::Ratio(ratio)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::{Dimension, Unit, UNITS};
+
+    #[test]
+    fn check_dimension() {
+        assert_eq!(Dimension::Height.get_name(), "Height");
+        assert_eq!(Dimension::Width.get_name(), "Width");
+    }
+
+    #[test]
+    fn check_unit() {
+        assert_eq!(Unit::get_items(), UNITS);
+
+        let zero_to_unit: Unit = 0usize.try_into().unwrap();
+        assert_eq!(zero_to_unit, Unit::Pixel);
+
+        let one_to_unit: Unit = 1usize.try_into().unwrap();
+        assert_eq!(one_to_unit, Unit::Percentage);
+
+        let two_to_unit: Unit = 2usize.try_into().unwrap();
+        assert_eq!(two_to_unit, Unit::Ratio);
     }
 }

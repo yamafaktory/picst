@@ -18,16 +18,17 @@ mod dimension;
 mod resized_image;
 mod spinner;
 mod stream;
+mod validation;
 
 static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Do the arguments parsing upfront to ensure to exit directly.
-    Args::parse();
+    let args = Args::parse();
 
     // Get the stream.
-    let stream = get_stream();
+    let stream = get_stream(args);
 
     // Pin it on the stack.
     pin_mut!(stream);

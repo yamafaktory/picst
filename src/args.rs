@@ -1,39 +1,7 @@
-use std::ops::RangeInclusive;
-
 use clap::Parser;
 use itertools::all;
 
-const PERCENT_RANGE: RangeInclusive<u32> = 1..=100;
-const RATIO_RANGE: RangeInclusive<f32> = 0.0..=1.0;
-
-fn percent_in_range(s: &str) -> Result<u32, String> {
-    let percent: u32 = s
-        .parse()
-        .map_err(|_| format!("`{}` is not a valid percentage", s))?;
-
-    if PERCENT_RANGE.contains(&percent) {
-        return Ok(percent);
-    }
-
-    Err(format!(
-        "Percentage must be an integer between {} and {}",
-        PERCENT_RANGE.start(),
-        PERCENT_RANGE.end()
-    ))
-}
-
-fn ratio_in_range(s: &str) -> Result<f32, String> {
-    let ratio: f32 = s
-        .parse()
-        .map_err(|_| format!("`{}` is not a valid ratio", s))?;
-
-    // We need to exclude zero too here (not ideal with a float).
-    if RATIO_RANGE.contains(&ratio) && ratio.is_normal() {
-        return Ok(ratio);
-    }
-
-    Err(String::from("Ratio must a float number > 0 and <= 1"))
-}
+use crate::validation::{percent_validator, ratio_validator};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -58,7 +26,7 @@ pub(crate) struct Args {
         conflicts_with = "width",
         conflicts_with = "ratio",
         long,
-        value_parser = percent_in_range
+        value_parser = percent_validator
     )]
     pub(crate) height_percent: Option<u32>,
 
@@ -70,7 +38,7 @@ pub(crate) struct Args {
         conflicts_with = "width",
         conflicts_with = "ratio",
         long,
-        value_parser = percent_in_range
+        value_parser = percent_validator
     )]
     pub(crate) width_percent: Option<u32>,
 
@@ -81,12 +49,13 @@ pub(crate) struct Args {
         conflicts_with = "width",
         conflicts_with = "width_percent",
         long,
-        value_parser = ratio_in_range
+        value_parser = ratio_validator
     )]
     pub(crate) ratio: Option<f32>,
 }
 
 /// Result of parsing the arguments as an enumeration.
+#[derive(Debug, PartialEq)]
 pub(crate) enum ArgsResult {
     /// Dimensions variant as a tuple of (height, width, dimensions in pixels).
     Dimensions(Option<u32>, Option<u32>, bool),
@@ -97,9 +66,7 @@ pub(crate) enum ArgsResult {
 }
 
 impl ArgsResult {
-    pub(crate) fn get() -> Self {
-        let args = Args::parse();
-
+    pub(crate) fn get(args: &Args) -> Self {
         // Check if no flags are provided and return the corresponding variant.
         if all(
             [
@@ -143,9 +110,79 @@ impl ArgsResult {
     }
 }
 
-#[test]
-fn check_args() {
-    use clap::CommandFactory;
+#[cfg(test)]
+mod tests {
+    use clap::{CommandFactory, Parser};
 
-    Args::command().debug_assert()
+    use super::{Args, ArgsResult};
+
+    fn get_args_result(flags: &str) -> ArgsResult {
+        let args = Args::parse_from(format!("picst {}", flags).split_whitespace());
+
+        ArgsResult::get(&args)
+    }
+
+    #[test]
+    /// This is a global test to verify that parsing the arguments doesn't break.
+    fn check_args() {
+        Args::command().debug_assert()
+    }
+
+    #[test]
+    fn check_args_result_no_flags() {
+        assert_eq!(get_args_result(""), ArgsResult::NoFlags);
+    }
+
+    #[test]
+    fn check_args_result_full_dimensions_pixels() {
+        assert_eq!(
+            get_args_result("--height 10 --width 20"),
+            ArgsResult::Dimensions(Some(10), Some(20), true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_height_only_pixels() {
+        assert_eq!(
+            get_args_result("--height 10"),
+            ArgsResult::Dimensions(Some(10), None, true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_width_only_pixels() {
+        assert_eq!(
+            get_args_result("--width 10"),
+            ArgsResult::Dimensions(None, Some(10), true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_full_dimensions_percent() {
+        assert_eq!(
+            get_args_result("--height-percent 10 --width-percent 20"),
+            ArgsResult::Dimensions(Some(10), Some(20), false)
+        );
+    }
+
+    #[test]
+    fn check_args_result_height_only_percent() {
+        assert_eq!(
+            get_args_result("--height-percent 10"),
+            ArgsResult::Dimensions(Some(10), None, false)
+        );
+    }
+
+    #[test]
+    fn check_args_result_width_only_percent() {
+        assert_eq!(
+            get_args_result("--width-percent 10"),
+            ArgsResult::Dimensions(None, Some(10), false)
+        );
+    }
+
+    #[test]
+    fn check_args_result_ratio() {
+        assert_eq!(get_args_result("--ratio 0.7"), ArgsResult::Ratio(0.7));
+    }
 }
