@@ -1,8 +1,8 @@
 use std::io::Read;
 
+use anyhow::Result;
 use arboard::Clipboard;
-use async_stream::stream;
-use clap::Parser;
+use async_stream::try_stream;
 use futures::Stream;
 use image::{imageops, RgbaImage};
 use itertools::equal;
@@ -10,16 +10,16 @@ use tokio::time::{sleep, Duration, Instant};
 
 use crate::{
     args::Args,
-    dimension::{get_dimension, Dimension},
+    dimension::{create_wizard, WizardResult},
     resized_image::ResizedImage,
     spinner::display_spinner,
 };
 
-/// Main loop stream polling on the clipboard content.
-pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {
-    let args = Args::parse();
+static SLEEP_TIME_MS: u64 = 250;
 
-    stream! {
+/// Main loop stream polling on the clipboard content.
+pub(crate) fn get_stream(args: Args) -> impl Stream<Item = Result<ResizedImage>> {
+    try_stream! {
         // Get a new instance of the clipboard.
         let mut clipboard = Clipboard::new().unwrap();
 
@@ -53,13 +53,30 @@ pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {
                     }
 
                     if !skip_iteration {
-                        let height = get_dimension(Dimension::Height, args.height);
-                        let width = get_dimension(Dimension::Width, args.width);
+                        // Create a wizard to handle all the necessary user prompts.
+                        let (height, width) = match create_wizard(&args)? {
+                            WizardResult::Dimensions(height, width, dimensions_in_pixels) => {
+                                if dimensions_in_pixels {
+                                    // Simple case: no resizing needed.
+                                    (height, width)
+                                } else {
+                                    // Return the new dimensions based on the percents.
+                                    ((image.height as u32 * height) / 100, (image.width as u32 * width) / 100)
+                                }
+                            }
+                            WizardResult::Ratio(ratio) => {
+                                // Return the new dimensions based on the ratio.
+                                ((image.height as f32 * ratio) as u32 , (image.width as f32 * ratio) as u32)
+                            }
+                        };
 
+                        // Keep track of the start time of the resize operation.
                         let start_time = Instant::now();
 
+                        // Display a spinner and get a closure to end it.
                         let on_done = display_spinner();
 
+                        // Proceed with the image resizing operation.
                         let resized_buffer = imageops::resize(&image_buffer, width, height, imageops::FilterType::Lanczos3);
 
                         // Try to get the bytes from the new image buffer.
@@ -82,7 +99,7 @@ pub(crate) fn get_stream() -> impl Stream<Item = ResizedImage> {
                 }
             };
 
-            sleep(Duration::from_millis(250)).await;
+            sleep(Duration::from_millis(SLEEP_TIME_MS)).await;
         }
     }
 }

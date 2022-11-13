@@ -48,14 +48,16 @@ impl ResizedImage {
             style(HumanDuration(self.start_time.elapsed())).magenta()
         );
         println!(
-            "{}Original height: {}.",
+            "{}Height: {} -> {}.",
             HEIGHT,
-            print_dimension(self.original_height)
+            print_dimension(self.original_height),
+            print_dimension(self.image_buffer.height())
         );
         println!(
-            "{}Original width: {}.",
+            "{}Width: {} -> {}.",
             WIDTH,
-            print_dimension(self.original_width)
+            print_dimension(self.original_width),
+            print_dimension(self.image_buffer.width())
         );
         println!(
             "{}Resized image successfully moved to the clipboard.",
