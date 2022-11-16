@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
 
 use anyhow::Result;
-use dialoguer::{console::Term, theme::ColorfulTheme, Input, Select};
+use arboard::ImageData;
+use dialoguer::{console::Term, theme::ColorfulTheme, Confirm, Input, Select};
 
 use crate::{
     args::{Args, ArgsResult},
@@ -64,6 +65,19 @@ pub(crate) enum WizardResult {
     Ratio(f32),
 }
 
+fn get_preserve_aspect_ratio() -> Result<()> {
+    if Confirm::new()
+        .with_prompt("Do you want to continue?")
+        .interact()?
+    {
+        println!("Looks like you want to continue");
+    } else {
+        println!("nevermind then :(");
+    }
+
+    Ok(())
+}
+
 /// Returns the unit selected by the user.
 fn get_unit() -> Result<Unit> {
     // Use a select to get the unit.
@@ -115,18 +129,31 @@ fn get_ratio() -> Result<f32> {
 
 /// Creates a full wizard which returns all the necessary information.
 /// It will prompt or not the user based on the parsed arguments.
-pub(crate) fn create_wizard(args: &Args) -> Result<WizardResult> {
+pub(crate) fn create_wizard(args: &Args, image: &ImageData) -> Result<WizardResult> {
+    dbg!(ArgsResult::get(args));
     match ArgsResult::get(args) {
         // If dimensions are passed, we eventually need to prompt for the
         // missing height or width.
-        ArgsResult::Dimensions(height, width, dimensions_in_pixels) => {
-            let height = match height {
-                Some(height) => height,
-                None => get_dimension(Dimension::Height, dimensions_in_pixels)?,
-            };
-            let width = match width {
-                Some(width) => width,
-                None => get_dimension(Dimension::Width, dimensions_in_pixels)?,
+        // We also need to take care of the aspect ratio.
+        ArgsResult::Dimensions(height, width, dimensions_in_pixels, ignore_aspect_ratio) => {
+            let (height, width) = match (height, width, ignore_aspect_ratio) {
+                (Some(height), None, false) => {
+                    (height, (image.height as u32 / height) * image.width as u32)
+                }
+                (Some(height), None, true) => (
+                    height,
+                    get_dimension(Dimension::Width, dimensions_in_pixels)?,
+                ),
+                (None, Some(width), false) => {
+                    ((image.width as u32 / width) * image.height as u32, width)
+                }
+                (None, Some(width), true) => (
+                    (image.width as u32 / width) * image.height as u32,
+                    get_dimension(Dimension::Height, dimensions_in_pixels)?,
+                ),
+                (Some(height), Some(width), false) => (height, width),
+                // We can't have height, width and ignore aspect ratio.
+                _ => unreachable!(),
             };
 
             Ok(WizardResult::Dimensions(

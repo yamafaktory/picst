@@ -1,4 +1,5 @@
-use clap::Parser;
+use clap::{error::ErrorKind, CommandFactory, Parser};
+use dialoguer::console::style;
 use itertools::all;
 
 use crate::validation::{percent_validator, ratio_validator};
@@ -9,13 +10,13 @@ pub(crate) struct Args {
     /// Height of the resized image in pixels.
     /// Can be combined with `width` in pixels.
     /// Cannot be combined with `width` in percent.
-    #[arg(short = 'H', long)]
+    #[arg(conflicts_with = "ratio", long, short = 'H')]
     pub(crate) height: Option<u32>,
 
     /// Width of the resized image in pixels.
     /// Can be combined with `height` in pixels.
     /// Cannot be combined with `height` in percent.
-    #[arg(short, long)]
+    #[arg(conflicts_with = "ratio", long, short)]
     pub(crate) width: Option<u32>,
 
     /// Height of the resized image in percent.
@@ -44,21 +45,64 @@ pub(crate) struct Args {
 
     /// Ratio to resize the image.
     #[arg(
-        conflicts_with = "height",
-        conflicts_with = "height_percent",
-        conflicts_with = "width",
-        conflicts_with = "width_percent",
         long,
+        conflicts_with = "ignore_aspect_ratio",
         value_parser = ratio_validator
     )]
     pub(crate) ratio: Option<f32>,
+
+    /// Ignore aspect ratio.
+    #[arg(conflicts_with = "ratio", long)]
+    pub(crate) ignore_aspect_ratio: bool,
+}
+
+impl Args {
+    /// Custom parser with some additional checking.
+    pub(crate) fn custom_parse() -> Args {
+        let args = Args::parse();
+        let mut cmd = Args::command();
+
+        // The `ignore_aspect_ratio` flag can be mixed with `height` and `width`.
+        if (args.height.is_some() && args.width.is_some()) && args.ignore_aspect_ratio {
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                // Note: there's no coloring API exposed with Clap.
+                // https://github.com/clap-rs/clap/issues/2035
+                format!(
+                    "The argument '{}' cannot be used with '{}' and '{}'",
+                    style("--ignore-aspect-ratio").yellow(),
+                    style("--height").yellow(),
+                    style("--width").yellow()
+                ),
+            )
+            .exit();
+        }
+
+        // The `ignore_aspect_ratio` flag can be mixed with `height-percent` and `width-percent`.
+        if (args.height_percent.is_some() && args.height_percent.is_some())
+            && args.ignore_aspect_ratio
+        {
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                format!(
+                    "The argument '{}' cannot be used with '{}' and '{}'",
+                    style("--ignore-aspect-ratio").yellow(),
+                    style("--height-percent").yellow(),
+                    style("--width-percent").yellow()
+                ),
+            )
+            .exit();
+        }
+
+        args
+    }
 }
 
 /// Result of parsing the arguments as an enumeration.
 #[derive(Debug, PartialEq)]
 pub(crate) enum ArgsResult {
     /// Dimensions variant as a tuple of (height, width, dimensions in pixels).
-    Dimensions(Option<u32>, Option<u32>, bool),
+    Dimensions(Option<u32>, Option<u32>, bool, bool),
     /// No flags variant.
     NoFlags,
     /// Ratio variant.
@@ -106,7 +150,12 @@ impl ArgsResult {
         let dimensions_in_pixels = has_height || has_width;
 
         // Finally return the dimensions variant.
-        ArgsResult::Dimensions(height, width, dimensions_in_pixels)
+        ArgsResult::Dimensions(
+            height,
+            width,
+            dimensions_in_pixels,
+            args.ignore_aspect_ratio,
+        )
     }
 }
 
@@ -137,7 +186,7 @@ mod tests {
     fn check_args_result_full_dimensions_pixels() {
         assert_eq!(
             get_args_result("--height 10 --width 20"),
-            ArgsResult::Dimensions(Some(10), Some(20), true)
+            ArgsResult::Dimensions(Some(10), Some(20), true, false)
         );
     }
 
@@ -145,7 +194,7 @@ mod tests {
     fn check_args_result_height_only_pixels() {
         assert_eq!(
             get_args_result("--height 10"),
-            ArgsResult::Dimensions(Some(10), None, true)
+            ArgsResult::Dimensions(Some(10), None, true, false)
         );
     }
 
@@ -153,7 +202,7 @@ mod tests {
     fn check_args_result_width_only_pixels() {
         assert_eq!(
             get_args_result("--width 10"),
-            ArgsResult::Dimensions(None, Some(10), true)
+            ArgsResult::Dimensions(None, Some(10), true, false)
         );
     }
 
@@ -161,7 +210,7 @@ mod tests {
     fn check_args_result_full_dimensions_percent() {
         assert_eq!(
             get_args_result("--height-percent 10 --width-percent 20"),
-            ArgsResult::Dimensions(Some(10), Some(20), false)
+            ArgsResult::Dimensions(Some(10), Some(20), false, false)
         );
     }
 
@@ -169,7 +218,7 @@ mod tests {
     fn check_args_result_height_only_percent() {
         assert_eq!(
             get_args_result("--height-percent 10"),
-            ArgsResult::Dimensions(Some(10), None, false)
+            ArgsResult::Dimensions(Some(10), None, false, false)
         );
     }
 
@@ -177,7 +226,39 @@ mod tests {
     fn check_args_result_width_only_percent() {
         assert_eq!(
             get_args_result("--width-percent 10"),
-            ArgsResult::Dimensions(None, Some(10), false)
+            ArgsResult::Dimensions(None, Some(10), false, false)
+        );
+    }
+
+    #[test]
+    fn check_args_result_height_only_ignore_aspect_ratio() {
+        assert_eq!(
+            get_args_result("--height 10 --ignore-aspect-ratio"),
+            ArgsResult::Dimensions(None, Some(10), false, true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_width_only_ignore_aspect_ratio() {
+        assert_eq!(
+            get_args_result("--width 10 --ignore-aspect-ratio"),
+            ArgsResult::Dimensions(None, Some(10), false, true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_height_only_percent_ignore_aspect_ratio() {
+        assert_eq!(
+            get_args_result("--height-percent 10 --ignore-aspect-ratio"),
+            ArgsResult::Dimensions(None, Some(10), false, true)
+        );
+    }
+
+    #[test]
+    fn check_args_result_width_only_percent_ignore_aspect_ratio() {
+        assert_eq!(
+            get_args_result("--width-percent 10 --ignore-aspect-ratio"),
+            ArgsResult::Dimensions(None, Some(10), false, true)
         );
     }
 

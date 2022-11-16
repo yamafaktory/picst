@@ -54,7 +54,7 @@ pub(crate) fn get_stream(args: Args) -> impl Stream<Item = Result<ResizedImage>>
 
                     if !skip_iteration {
                         // Create a wizard to handle all the necessary user prompts.
-                        let (height, width) = match create_wizard(&args)? {
+                        let (height, width) = match create_wizard(&args, &image)? {
                             WizardResult::Dimensions(height, width, dimensions_in_pixels) => {
                                 if dimensions_in_pixels {
                                     // Simple case: no resizing needed.
