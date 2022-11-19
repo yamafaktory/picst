@@ -2,11 +2,20 @@
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/yamafaktory/picst/ci?style=for-the-badge) ![Crates.io](https://img.shields.io/crates/v/picst?style=for-the-badge)
 
-## 🤔 What?
+```
+██████╗ ██╗ ██████╗███████╗████████╗
+██╔══██╗██║██╔════╝██╔════╝╚══██╔══╝
+██████╔╝██║██║     ███████╗   ██║
+██╔═══╝ ██║██║     ╚════██║   ██║
+██║     ██║╚██████╗███████║   ██║
+╚═╝     ╚═╝ ╚═════╝╚══════╝   ╚═╝
+```
 
-`picst` is a small CLI tool aiming at making the "copy -> resize -> paste" image workflow super simple and more friendly.
+## 📷 Presentation
 
-Start `picst`, copy an image, eventually provide new dimensions if not passed via the flags, paste it anywhere - a piece of cake!
+`picst` is a small cross-platform CLI tool aiming at making the "copy → resize → paste" image workflow super simple and more friendly.
+
+Start `picst`, copy an image, eventually provide new dimensions if not passed via the flags, paste it anywhere - a piece of cake 🍰!
 
 ## 🛠️ Installation
 
@@ -28,27 +37,47 @@ Note: `picst` will keep running and checking for new images copied in the clipbo
 
 ### Percent
 
-Use the `height-percent` and `width-percent` flags:
+Use the `--height-percent` or the `--width-percent` flags:
 
 ```sh
-picst --height-percent 70 --width-percent 70
+picst --height-percent 30
 ```
 
-You can also omit either the `height-percent` or the `width-percent` flag, the tool will prompt you for the missing one.
+```sh
+picst --width-percent 50
+```
+
+By default, `picst` preserves the aspect ratio of the image and will adjust the other dimension accordingly.
+
+You can either skip this behavior with the `--ignore-aspect-ratio` flag - the tool will then prompt you for the other dimension - or you can directly set both flags:
+
+```sh
+picst --height-percent 30 --width-percent 50
+```
 
 ### Pixels
 
-Use the `height` and `width` flags:
+Use the `--height` or the `--width` flags:
 
 ```sh
-picst --height 300 --width 300
+picst --height 300
 ```
 
-You can also omit either the `height` or the `width` flag, the tool will prompt you for the missing one.
+```sh
+picst --width 500
+```
+
+By default, `picst` preserves the aspect ratio of the image and will adjust the other dimension accordingly.
+
+You can either skip this behavior with the `--ignore-aspect-ratio` flag - the tool will then prompt you for the other dimension - or you can directly set both flags:
+
+```sh
+picst --height 300 --width 500
+```
 
 ### Ratio
 
-Use the `ratio` flag:
+Use the `--ratio` flag:
 
 ```sh
 picst --ratio 0.7
@@ -56,8 +85,18 @@ picst --ratio 0.7
 
 ### Special case: no flags
 
-With no flags, dimensions will get prompted for every new image (first the unit `percent` | `pixels` | `ratio`, then the `height` and the `width` or the `ratio` based on your choice):
+If no flags are passed to the tool, a complete wizard will be presented to you:
 
 ```sh
 picst
 ```
+
+```sh
+Pixel --------┐
+              |---→  Height* | Width* | Both ---→  value(s)
+Percentage ---┘
+
+Ratio ------------→  value
+```
+
+- With **Height** and **Width**, the aspect ratio will be preserved.

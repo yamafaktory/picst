@@ -8,6 +8,7 @@ static HEIGHT: Emoji<'_, '_> = Emoji("↕️ ", "");
 static WIDTH: Emoji<'_, '_> = Emoji("↔️ ", "");
 static ZAP: Emoji<'_, '_> = Emoji("⚡", "");
 
+/// Simple type alias.
 type ImageBufferU8 = ImageBuffer<Rgba<u8>, Vec<u8>>;
 
 /// Item produced by the stream.

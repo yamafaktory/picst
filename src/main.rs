@@ -7,7 +7,6 @@ use std::{borrow::Cow, io::Read};
 
 use anyhow::Result;
 use arboard::{Clipboard, ImageData};
-use clap::Parser;
 use dialoguer::console::{style, Emoji};
 use futures::{pin_mut, StreamExt};
 
@@ -18,14 +17,28 @@ mod dimension;
 mod resized_image;
 mod spinner;
 mod stream;
+mod unit;
 mod validation;
+mod wizard;
+
+static PICST: &str = r#"
+██████╗ ██╗ ██████╗███████╗████████╗
+██╔══██╗██║██╔════╝██╔════╝╚══██╔══╝
+██████╔╝██║██║     ███████╗   ██║   
+██╔═══╝ ██║██║     ╚════██║   ██║   
+██║     ██║╚██████╗███████║   ██║   
+╚═╝     ╚═╝ ╚═════╝╚══════╝   ╚═╝  
+"#;
 
 static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Display the banner.
+    println!("{}", style(PICST).magenta());
+
     // Do the arguments parsing upfront to ensure to exit directly.
-    let args = Args::parse();
+    let args = Args::custom_parse();
 
     // Get the stream.
     let stream = get_stream(args);
