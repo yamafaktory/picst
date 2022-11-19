@@ -98,11 +98,27 @@ impl Args {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub(crate) struct ArgsMetadata {
+    pub(crate) is_pixel: bool,
+    pub(crate) ignore_aspect_ratio: bool,
+}
+
+impl ArgsMetadata {
+    fn new(is_pixel: bool, ignore_aspect_ratio: bool) -> Self {
+        Self {
+            is_pixel,
+            ignore_aspect_ratio,
+        }
+    }
+}
+
 /// Result of parsing the arguments as an enumeration.
 #[derive(Debug, PartialEq)]
 pub(crate) enum ArgsResult {
-    /// Dimensions variant as a tuple of (height, width, dimensions in pixels).
-    Dimensions(Option<u32>, Option<u32>, bool, bool),
+    /// Dimensions variant as a tuple of (height, width, dimensions in pixels,
+    /// ignore aspect ratio).
+    Dimensions(Option<u32>, Option<u32>, ArgsMetadata),
     /// No flags variant.
     NoFlags,
     /// Ratio variant.
@@ -130,31 +146,31 @@ impl ArgsResult {
             return ArgsResult::Ratio(ratio);
         }
 
-        let has_height = args.height.is_some();
-        let has_width = args.width.is_some();
+        let has_pixel_height = args.height.is_some();
+        let has_pixel_width = args.width.is_some();
 
         // Re-map the height.
-        let height = if has_height {
+        let height = if has_pixel_height {
             args.height
         } else {
             args.height_percent
         };
 
         // Re-map the width.
-        let width = if has_width {
+        let width = if has_pixel_width {
             args.width
         } else {
             args.width_percent
         };
 
-        let dimensions_in_pixels = has_height || has_width;
-
         // Finally return the dimensions variant.
         ArgsResult::Dimensions(
             height,
             width,
-            dimensions_in_pixels,
-            args.ignore_aspect_ratio,
+            ArgsMetadata::new(
+                has_pixel_height || has_pixel_width,
+                args.ignore_aspect_ratio,
+            ),
         )
     }
 }
@@ -163,7 +179,7 @@ impl ArgsResult {
 mod tests {
     use clap::{CommandFactory, Parser};
 
-    use super::{Args, ArgsResult};
+    use super::{Args, ArgsMetadata, ArgsResult};
 
     fn get_args_result(flags: &str) -> ArgsResult {
         let args = Args::parse_from(format!("picst {}", flags).split_whitespace());
@@ -186,7 +202,7 @@ mod tests {
     fn check_args_result_full_dimensions_pixels() {
         assert_eq!(
             get_args_result("--height 10 --width 20"),
-            ArgsResult::Dimensions(Some(10), Some(20), true, false)
+            ArgsResult::Dimensions(Some(10), Some(20), ArgsMetadata::new(true, false))
         );
     }
 
@@ -194,7 +210,7 @@ mod tests {
     fn check_args_result_height_only_pixels() {
         assert_eq!(
             get_args_result("--height 10"),
-            ArgsResult::Dimensions(Some(10), None, true, false)
+            ArgsResult::Dimensions(Some(10), None, ArgsMetadata::new(true, false))
         );
     }
 
@@ -202,7 +218,7 @@ mod tests {
     fn check_args_result_width_only_pixels() {
         assert_eq!(
             get_args_result("--width 10"),
-            ArgsResult::Dimensions(None, Some(10), true, false)
+            ArgsResult::Dimensions(None, Some(10), ArgsMetadata::new(true, false))
         );
     }
 
@@ -210,7 +226,7 @@ mod tests {
     fn check_args_result_full_dimensions_percent() {
         assert_eq!(
             get_args_result("--height-percent 10 --width-percent 20"),
-            ArgsResult::Dimensions(Some(10), Some(20), false, false)
+            ArgsResult::Dimensions(Some(10), Some(20), ArgsMetadata::new(false, false))
         );
     }
 
@@ -218,7 +234,7 @@ mod tests {
     fn check_args_result_height_only_percent() {
         assert_eq!(
             get_args_result("--height-percent 10"),
-            ArgsResult::Dimensions(Some(10), None, false, false)
+            ArgsResult::Dimensions(Some(10), None, ArgsMetadata::new(false, false))
         );
     }
 
@@ -226,7 +242,7 @@ mod tests {
     fn check_args_result_width_only_percent() {
         assert_eq!(
             get_args_result("--width-percent 10"),
-            ArgsResult::Dimensions(None, Some(10), false, false)
+            ArgsResult::Dimensions(None, Some(10), ArgsMetadata::new(false, false))
         );
     }
 
@@ -234,7 +250,7 @@ mod tests {
     fn check_args_result_height_only_ignore_aspect_ratio() {
         assert_eq!(
             get_args_result("--height 10 --ignore-aspect-ratio"),
-            ArgsResult::Dimensions(None, Some(10), false, true)
+            ArgsResult::Dimensions(Some(10), None, ArgsMetadata::new(true, true))
         );
     }
 
@@ -242,7 +258,7 @@ mod tests {
     fn check_args_result_width_only_ignore_aspect_ratio() {
         assert_eq!(
             get_args_result("--width 10 --ignore-aspect-ratio"),
-            ArgsResult::Dimensions(None, Some(10), false, true)
+            ArgsResult::Dimensions(None, Some(10), ArgsMetadata::new(true, true))
         );
     }
 
@@ -250,7 +266,7 @@ mod tests {
     fn check_args_result_height_only_percent_ignore_aspect_ratio() {
         assert_eq!(
             get_args_result("--height-percent 10 --ignore-aspect-ratio"),
-            ArgsResult::Dimensions(None, Some(10), false, true)
+            ArgsResult::Dimensions(Some(10), None, ArgsMetadata::new(false, true))
         );
     }
 
@@ -258,7 +274,7 @@ mod tests {
     fn check_args_result_width_only_percent_ignore_aspect_ratio() {
         assert_eq!(
             get_args_result("--width-percent 10 --ignore-aspect-ratio"),
-            ArgsResult::Dimensions(None, Some(10), false, true)
+            ArgsResult::Dimensions(None, Some(10), ArgsMetadata::new(false, true))
         );
     }
 

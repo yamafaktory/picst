@@ -16,13 +16,13 @@ version = "1.0.0"
 anyhow = "1.0.66"
 arboard = "3.2.0"
 async-stream = "0.3.3"
-clap = { version = "4.0.23", features = ["derive"] }
+clap = { version = "4.0.26", features = ["derive"] }
 dialoguer = "0.10.2"
 futures = "0.3.25"
 image = "0.24.5"
 indicatif = "0.17.2"
 itertools = "0.10.5"
-tokio = { version = "1.21.2", features = ["full"] }
+tokio = { version = "1.22.0", features = ["full"] }
 
 [profile.release]
 codegen-units = 1

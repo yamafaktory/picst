@@ -17,7 +17,9 @@ mod dimension;
 mod resized_image;
 mod spinner;
 mod stream;
+mod unit;
 mod validation;
+mod wizard;
 
 static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 

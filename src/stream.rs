@@ -9,10 +9,7 @@ use itertools::equal;
 use tokio::time::{sleep, Duration, Instant};
 
 use crate::{
-    args::Args,
-    dimension::{create_wizard, WizardResult},
-    resized_image::ResizedImage,
-    spinner::display_spinner,
+    args::Args, resized_image::ResizedImage, spinner::display_spinner, wizard::create_wizard,
 };
 
 static SLEEP_TIME_MS: u64 = 250;
@@ -54,21 +51,7 @@ pub(crate) fn get_stream(args: Args) -> impl Stream<Item = Result<ResizedImage>>
 
                     if !skip_iteration {
                         // Create a wizard to handle all the necessary user prompts.
-                        let (height, width) = match create_wizard(&args, &image)? {
-                            WizardResult::Dimensions(height, width, dimensions_in_pixels) => {
-                                if dimensions_in_pixels {
-                                    // Simple case: no resizing needed.
-                                    (height, width)
-                                } else {
-                                    // Return the new dimensions based on the percents.
-                                    ((image.height as u32 * height) / 100, (image.width as u32 * width) / 100)
-                                }
-                            }
-                            WizardResult::Ratio(ratio) => {
-                                // Return the new dimensions based on the ratio.
-                                ((image.height as f32 * ratio) as u32 , (image.width as f32 * ratio) as u32)
-                            }
-                        };
+                        let (height, width) = create_wizard(&args, &image)?;
 
                         // Keep track of the start time of the resize operation.
                         let start_time = Instant::now();
