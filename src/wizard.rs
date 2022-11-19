@@ -111,7 +111,7 @@ fn resize(
     // We need to do some casting to keep the ratio correct.
     let ratio: f32 = image_first_dimension as f32 / current_dimension as f32;
 
-    (image_second_dimension as f32 / ratio) as u32
+    ((image_second_dimension as f32 / ratio).round()) as u32
 }
 
 /// Creates a full wizard which returns a tuple of (height, width).
