@@ -93,10 +93,10 @@ picst
 
 ```sh
 Pixel --------┐
-              |---→  Height* | Width* | Both ---→  value(s)
+              |--->  Height* | Width* | Both --->  value(s)
 Percentage ---┘
 
-Ratio ------------→  value
+Ratio ------------>  value
 ```
 
 - With **Height** and **Width**, the aspect ratio will be preserved.
