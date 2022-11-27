@@ -7,12 +7,17 @@ use std::{borrow::Cow, io::Read};
 
 use anyhow::Result;
 use arboard::{Clipboard, ImageData};
-use dialoguer::console::{style, Emoji};
+use dialoguer::console::style;
 use futures::{pin_mut, StreamExt};
 
-use crate::{args::Args, stream::get_stream};
+use crate::{
+    args::Args,
+    assets::{BOOM, PICST},
+    stream::get_stream,
+};
 
 mod args;
+mod assets;
 mod dimension;
 mod resized_image;
 mod spinner;
@@ -20,17 +25,6 @@ mod stream;
 mod unit;
 mod validation;
 mod wizard;
-
-static PICST: &str = r#"
-██████╗ ██╗ ██████╗███████╗████████╗
-██╔══██╗██║██╔════╝██╔════╝╚══██╔══╝
-██████╔╝██║██║     ███████╗   ██║   
-██╔═══╝ ██║██║     ╚════██║   ██║   
-██║     ██║╚██████╗███████║   ██║   
-╚═╝     ╚═╝ ╚═════╝╚══════╝   ╚═╝  
-"#;
-
-static BOOM: Emoji<'_, '_> = Emoji("💥 ", "");
 
 #[tokio::main]
 async fn main() -> Result<()> {

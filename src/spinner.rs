@@ -2,9 +2,7 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-static DOTS: &[&str; 14] = &[
-    "⠄", "⠆", "⠇", "⠋", "⠙", "⠸", "⠰", "⠠", "⠰", "⠸", "⠙", "⠋", "⠇", "⠆",
-];
+use crate::assets::DOTS;
 
 /// Displays a spinner and provides a closure to be called when done.
 pub(crate) fn display_spinner() -> impl Fn() {
@@ -12,7 +10,7 @@ pub(crate) fn display_spinner() -> impl Fn() {
 
     spinner.enable_steady_tick(Duration::from_millis(50));
     spinner.set_style(
-        ProgressStyle::with_template("{spinner:.blue} {msg}")
+        ProgressStyle::with_template("{spinner:.magenta} {msg}")
             .unwrap()
             .tick_strings(DOTS),
     );

@@ -1,12 +1,9 @@
-use dialoguer::console::{style, Emoji};
+use dialoguer::console::style;
 use image::{ImageBuffer, Rgba};
-use indicatif::HumanDuration;
+use indicatif::{HumanBytes, HumanDuration};
 use tokio::time::Instant;
 
-static CLIPBOARD: Emoji<'_, '_> = Emoji("📋 ", "");
-static HEIGHT: Emoji<'_, '_> = Emoji("↕️ ", "");
-static WIDTH: Emoji<'_, '_> = Emoji("↔️ ", "");
-static ZAP: Emoji<'_, '_> = Emoji("⚡", "");
+use crate::assets::{CLIPBOARD, HEIGHT, STATS, WIDTH, ZAP};
 
 /// Simple type alias.
 type ImageBufferU8 = ImageBuffer<Rgba<u8>, Vec<u8>>;
@@ -60,6 +57,15 @@ impl ResizedImage {
             print_dimension(self.original_width),
             print_dimension(self.image_buffer.width())
         );
+        println!(
+            "{}Bytes: {}.",
+            STATS,
+            style(HumanBytes(
+                self.image_buffer.as_raw().len().try_into().unwrap()
+            ))
+            .magenta()
+        );
+
         println!(
             "{}Resized image successfully moved to the clipboard.",
             CLIPBOARD
