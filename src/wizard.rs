@@ -164,6 +164,16 @@ pub(crate) fn create_wizard(args: &Args, image: &ImageData) -> Result<DimensionT
 
             Ok((height, width))
         }
+        ArgsResult::MaxByteSize(maximum_byte_size) => {
+            let current_byte_size = image.bytes.len();
+            let percentage = ((1.0 / (current_byte_size as f32 / maximum_byte_size as f32).sqrt())
+                * 100.0) as u32;
+
+            Ok((
+                resize(image.width, percentage, image.height, false),
+                resize(image.height, percentage, image.width, false),
+            ))
+        }
         // If no flags are passed, we first need to get the unit.
         // In case of a ratio, simply prompt the user.
         // Otherwise, prompt first for the height / width or both and then

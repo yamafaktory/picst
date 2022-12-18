@@ -67,6 +67,7 @@ async fn main() -> Result<()> {
                 style("Moving the image to the clipboard failed!").red(),
                 BOOM
             );
+
             // New line for readability.
             println!();
         }

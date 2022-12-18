@@ -1,6 +1,6 @@
 # picst
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/yamafaktory/picst/ci?style=for-the-badge) ![Crates.io](https://img.shields.io/crates/v/picst?style=for-the-badge)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yamafaktory/picst/ci.yml?branch=main&logo=github&style=flat-square)](https://github.com/yamafaktory/picst/actions/workflows/ci.yml) [![Crates.io](https://img.shields.io/crates/v/picst?style=for-the-badge)](https://crates.io/crates/picst)
 
 ```
 ██████╗ ██╗ ██████╗███████╗████████╗
