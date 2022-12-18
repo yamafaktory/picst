@@ -1,7 +1,3 @@
-# picst
-
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yamafaktory/picst/ci.yml?branch=main&logo=github&style=flat-square)](https://github.com/yamafaktory/picst/actions/workflows/ci.yml) [![Crates.io](https://img.shields.io/crates/v/picst?style=flat-square)](https://crates.io/crates/picst)
-
 ```
 ██████╗ ██╗ ██████╗███████╗████████╗
 ██╔══██╗██║██╔════╝██╔════╝╚══██╔══╝
@@ -10,6 +6,8 @@
 ██║     ██║╚██████╗███████║   ██║
 ╚═╝     ╚═╝ ╚═════╝╚══════╝   ╚═╝
 ```
+
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yamafaktory/picst/ci.yml?branch=main&logo=github&style=flat-square)](https://github.com/yamafaktory/picst/actions/workflows/ci.yml) [![Crates.io](https://img.shields.io/crates/v/picst?style=flat-square)](https://crates.io/crates/picst)
 
 ## 📷 Presentation
 
