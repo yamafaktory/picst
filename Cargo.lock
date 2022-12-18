@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "picst"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "anyhow",
  "arboard",
