@@ -54,6 +54,10 @@ pub(crate) struct Args {
     /// Ignore aspect ratio.
     #[arg(conflicts_with = "ratio", long)]
     pub(crate) ignore_aspect_ratio: bool,
+
+    /// Maximum byte size.
+    #[arg(exclusive = true, long)]
+    pub(crate) maximum_byte_size: Option<u32>,
 }
 
 impl Args {
@@ -119,6 +123,8 @@ pub(crate) enum ArgsResult {
     /// Dimensions variant as a tuple of (height, width, dimensions in pixels,
     /// ignore aspect ratio).
     Dimensions(Option<u32>, Option<u32>, ArgsMetadata),
+    /// Maximum byte size.
+    MaxByteSize(u32),
     /// No flags variant.
     NoFlags,
     /// Ratio variant.
@@ -127,6 +133,16 @@ pub(crate) enum ArgsResult {
 
 impl ArgsResult {
     pub(crate) fn get(args: &Args) -> Self {
+        // The maximum byte size is exclusive, check it first.
+        if let Some(maximum_byte_size) = args.maximum_byte_size {
+            return ArgsResult::MaxByteSize(maximum_byte_size);
+        }
+
+        // Check if the ratio is provided and return the corresponding variant.
+        if let Some(ratio) = args.ratio {
+            return ArgsResult::Ratio(ratio);
+        }
+
         // Check if no flags are provided and return the corresponding variant.
         if all(
             [
@@ -139,11 +155,6 @@ impl ArgsResult {
         ) && args.ratio.is_none()
         {
             return ArgsResult::NoFlags;
-        }
-
-        // Check if the ratio is provided and return the corresponding variant.
-        if let Some(ratio) = args.ratio {
-            return ArgsResult::Ratio(ratio);
         }
 
         let has_pixel_height = args.height.is_some();

@@ -1,6 +1,6 @@
 use dialoguer::console::style;
 use image::{ImageBuffer, Rgba};
-use indicatif::{HumanBytes, HumanDuration};
+use indicatif::{BinaryBytes, HumanDuration};
 use tokio::time::Instant;
 
 use crate::assets::{CLIPBOARD, HEIGHT, STATS, WIDTH, ZAP};
@@ -60,16 +60,13 @@ impl ResizedImage {
         println!(
             "{}Bytes: {}.",
             STATS,
-            style(HumanBytes(
+            style(BinaryBytes(
                 self.image_buffer.as_raw().len().try_into().unwrap()
             ))
             .magenta()
         );
+        println!("{CLIPBOARD}Resized image successfully moved to the clipboard.",);
 
-        println!(
-            "{}Resized image successfully moved to the clipboard.",
-            CLIPBOARD
-        );
         // New line for readability.
         println!();
     }
