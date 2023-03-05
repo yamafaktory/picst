@@ -13,16 +13,16 @@ rust-version = "1.65"
 version = "2.0.3"
 
 [dependencies]
-anyhow = "1.0.68"
+anyhow = "1.0.69"
 arboard = "3.2.0"
-async-stream = "0.3.3"
-clap = { version = "4.0.32", features = ["derive"] }
-dialoguer = "0.10.2"
-futures = "0.3.25"
+async-stream = "0.3.4"
+clap = { version = "4.1.8", features = ["derive"] }
+dialoguer = "0.10.3"
+futures = "0.3.26"
 image = "0.24.5"
-indicatif = "0.17.2"
+indicatif = "0.17.3"
 itertools = "0.10.5"
-tokio = { version = "1.23.0", features = ["full"] }
+tokio = { version = "1.26.0", features = ["full"] }
 
 [profile.release]
 codegen-units = 1
