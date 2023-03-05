@@ -24,61 +24,56 @@ pub(crate) fn get_stream(args: Args) -> impl Stream<Item = Result<ResizedImage>>
         let mut previous_image: Option<Vec<u8>>= None;
 
         loop {
-            match clipboard.get_image() {
-                Ok(image)=> {
-                    // Use a bool to flag for noop.
-                    let mut skip_iteration = false;
+            if let Ok(image) = clipboard.get_image() {
+                // Use a bool to flag for noop.
+                let mut skip_iteration = false;
 
-                    // Convert the clipboard image to an image buffer.
-                    let image_buffer = RgbaImage::from_raw(image.width as u32, image.height as u32, image.bytes.to_vec()).unwrap();
+                // Convert the clipboard image to an image buffer.
+                let image_buffer = RgbaImage::from_raw(image.width as u32, image.height as u32, image.bytes.to_vec()).unwrap();
+
+                // Try to get the bytes from the new image buffer.
+                let maybe_bytes: Result<Vec<u8>, _> = image_buffer.bytes().collect();
+
+                if let Ok(bytes) = maybe_bytes {
+                    // Try to unwrap the previous image.
+                    if let Some(ref buffer) = previous_image {
+                        // If we have a mismatch, we assume that we have
+                        // a new image from the clipboard.
+                        // Store it.
+                        if equal(&bytes, buffer) {
+                            skip_iteration = true;
+                        } else {
+                            previous_image = Some(bytes);
+                        }
+                    }
+                }
+
+                if !skip_iteration {
+                    // Create a wizard to handle all the necessary user prompts.
+                    let (height, width) = create_wizard(&args, &image)?;
+
+                    // Keep track of the start time of the resize operation.
+                    let start_time = Instant::now();
+
+                    // Display a spinner and get a closure to end it.
+                    let on_done = display_spinner();
+
+                    // Proceed with the image resizing operation.
+                    let resized_buffer = imageops::resize(&image_buffer, width, height, imageops::FilterType::Lanczos3);
 
                     // Try to get the bytes from the new image buffer.
-                    let maybe_bytes: Result<Vec<u8>, _> = image_buffer.bytes().collect();
+                    let maybe_resized_bytes: Result<Vec<u8>, _> = resized_buffer.bytes().collect();
 
-                    if let Ok(bytes) = maybe_bytes {
-                        // Try to unwrap the previous image.
-                        if let Some(ref buffer) = previous_image {
-                            // If we have a mismatch, we assume that we have
-                            // a new image from the clipboard.
-                            // Store it.
-                            if !equal(&bytes, buffer) {
-                                previous_image = Some(bytes);
-                            } else {
-                                skip_iteration = true
-                            }
-                        }
+                    if let Ok(bytes) = maybe_resized_bytes {
+                        // Keep track of the resized image which is going
+                        // to be move to the clipboard.
+                        previous_image = Some(bytes);
+
+                        // Stop the spinner.
+                        on_done();
+
+                        yield ResizedImage::new(resized_buffer, image_buffer.height(),image_buffer.width(), start_time)
                     }
-
-                    if !skip_iteration {
-                        // Create a wizard to handle all the necessary user prompts.
-                        let (height, width) = create_wizard(&args, &image)?;
-
-                        // Keep track of the start time of the resize operation.
-                        let start_time = Instant::now();
-
-                        // Display a spinner and get a closure to end it.
-                        let on_done = display_spinner();
-
-                        // Proceed with the image resizing operation.
-                        let resized_buffer = imageops::resize(&image_buffer, width, height, imageops::FilterType::Lanczos3);
-
-                        // Try to get the bytes from the new image buffer.
-                        let maybe_resized_bytes: Result<Vec<u8>, _> = resized_buffer.bytes().collect();
-
-                        if let Ok(bytes) = maybe_resized_bytes {
-                            // Keep track of the resized image which is going
-                            // to be move to the clipboard.
-                            previous_image = Some(bytes);
-
-                            // Stop the spinner.
-                            on_done();
-
-                            yield ResizedImage::new(resized_buffer, image_buffer.height(),image_buffer.width(), start_time)
-                        }
-                    }
-                },
-                Err(_) => {
-                    // Skip.
                 }
             };
 

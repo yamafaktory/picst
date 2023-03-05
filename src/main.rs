@@ -1,7 +1,14 @@
+#![deny(clippy::pedantic, clippy::clone_on_ref_ptr)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::float_cmp
+)]
 #![deny(unsafe_code, nonstandard_style)]
+#![doc = include_str!("../README.md")]
 #![forbid(rust_2021_compatibility)]
 #![warn(missing_debug_implementations, missing_docs)]
-#![doc = include_str!("../README.md")]
 
 use std::{borrow::Cow, io::Read};
 
